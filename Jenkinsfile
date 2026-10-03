@@ -68,6 +68,7 @@ pipeline {
                         . .venv/bin/activate
                         export ENV=test
                         export TEST_DATABASE_URL="postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/codelens_test"
+                        export REDIS_URL="redis://localhost:6379/0"
                         pytest --cov=app --cov-report=xml --cov-report=term -q
                     '''
                 }
