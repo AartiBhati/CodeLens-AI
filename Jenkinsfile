@@ -50,32 +50,23 @@ pipeline {
             steps {
                 sh '''
                     docker compose -p codelens-ci -f docker-compose.ci.yml up -d postgres redis
-
                     docker compose -p codelens-ci -f docker-compose.ci.yml exec -T postgres sh -c \
-                      "until pg_isready -U ${POSTGRES_USER:-codelens}; do sleep 1; done"
-
+                    "until pg_isready -U ${POSTGRES_USER:-codelens}; do sleep 1; done"
                     docker compose -p codelens-ci -f docker-compose.ci.yml exec -T postgres psql -U ${POSTGRES_USER:-codelens} -tc \
-                      "SELECT 1 FROM pg_database WHERE datname = 'codelens_test'" | grep -q 1 || \
-                      docker compose -p codelens-ci -f docker-compose.ci.yml exec -T postgres createdb -U ${POSTGRES_USER:-codelens} codelens_test
-                '''
+                    "SELECT 1 FROM pg_database WHERE datname = 'codelens_test'" | grep -q 1 || \
+                    docker compose -p codelens-ci -f docker-compose.ci.yml exec -T postgres createdb -U ${POSTGRES_USER:-codelens} codelens_test
+               '''
             }
         }
 
         stage('Backend: Pytest') {
             steps {
-                dir('backend') {
-                    sh '''
-                        . .venv/bin/activate
-                        export ENV=test
-                        export TEST_DATABASE_URL="postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/codelens_test"
-                        export REDIS_URL="redis://localhost:6379/0"
-                        pytest --cov=app --cov-report=xml --cov-report=term -q
-                    '''
-                }
+                sh '''
+                    docker compose -p codelens-ci -f docker-compose.ci.yml run --rm backend-test
+                '''
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: 'backend/**/pytest-report.xml'
                     sh 'docker compose -p codelens-ci -f docker-compose.ci.yml down -v --remove-orphans || true'
                 }
             }
