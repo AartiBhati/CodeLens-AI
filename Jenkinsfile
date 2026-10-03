@@ -49,14 +49,14 @@ pipeline {
         stage('Backend: Test Infra') {
             steps {
                 sh '''
-                    docker compose -f docker-compose.ci.yml up -d postgres redis
+                    docker compose -p codelens-ci -f docker-compose.ci.yml up -d postgres redis
 
-                    docker compose -f docker-compose.ci.yml exec -T postgres sh -c \
+                    docker compose -p codelens-ci -f docker-compose.ci.yml exec -T postgres sh -c \
                       "until pg_isready -U ${POSTGRES_USER:-codelens}; do sleep 1; done"
 
-                    docker compose -f docker-compose.ci.yml exec -T postgres psql -U ${POSTGRES_USER:-codelens} -tc \
+                    docker compose -p codelens-ci -f docker-compose.ci.yml exec -T postgres psql -U ${POSTGRES_USER:-codelens} -tc \
                       "SELECT 1 FROM pg_database WHERE datname = 'codelens_test'" | grep -q 1 || \
-                      docker compose -f docker-compose.ci.yml exec -T postgres createdb -U ${POSTGRES_USER:-codelens} codelens_test
+                      docker compose -p codelens-ci -f docker-compose.ci.yml exec -T postgres createdb -U ${POSTGRES_USER:-codelens} codelens_test
                 '''
             }
         }
@@ -75,7 +75,7 @@ pipeline {
             post {
                 always {
                     junit allowEmptyResults: true, testResults: 'backend/**/pytest-report.xml'
-                    sh 'docker compose down -v || true'
+                    sh 'docker compose -p codelens-ci -f docker-compose.ci.yml down -v --remove-orphans || true'
                 }
             }
         }
