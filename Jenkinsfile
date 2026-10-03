@@ -48,16 +48,15 @@ pipeline {
 
         stage('Backend: Test Infra') {
             steps {
-                // Spin up just the stateful deps the test suite needs; the
-                // app-under-test runs in-process via httpx's ASGITransport,
-                // not as a container, so this is fast.
                 sh '''
-                    docker compose up -d postgres redis
-                    docker compose exec -T postgres sh -c \
+                    docker compose -f docker-compose.ci.yml up -d postgres redis
+
+                    docker compose -f docker-compose.ci.yml exec -T postgres sh -c \
                       "until pg_isready -U ${POSTGRES_USER:-codelens}; do sleep 1; done"
-                    docker compose exec -T postgres psql -U ${POSTGRES_USER:-codelens} -tc \
+
+                    docker compose -f docker-compose.ci.yml exec -T postgres psql -U ${POSTGRES_USER:-codelens} -tc \
                       "SELECT 1 FROM pg_database WHERE datname = 'codelens_test'" | grep -q 1 || \
-                      docker compose exec -T postgres createdb -U ${POSTGRES_USER:-codelens} codelens_test
+                      docker compose -f docker-compose.ci.yml exec -T postgres createdb -U ${POSTGRES_USER:-codelens} codelens_test
                 '''
             }
         }
