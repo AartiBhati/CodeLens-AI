@@ -22,8 +22,9 @@ pipeline {
             steps {
                 dir('backend') {
                     sh '''
-                        python3 -m venv .venv
+                        /var/lib/jenkins/.pyenv/versions/3.11.17/bin/python3 -m venv .venv
                         . .venv/bin/activate
+                        python --version
                         pip install --upgrade pip
                         pip install -r requirements.txt
                     '''
