@@ -63,5 +63,6 @@ class AuthService:
             return
 
         ttl = int(exp - datetime.now(timezone.utc).timestamp())
+
         if ttl > 0:
             await self.redis.set(f"blacklist:{jti}", "1", ex=ttl)

@@ -27,6 +27,7 @@ async def get_redis() -> AsyncGenerator[redis.Redis, None]:
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db),
+    redis_client: redis.Redis = Depends(get_redis),
 ) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -42,10 +43,8 @@ async def get_current_user(
     if user_id is None or jti is None:
         raise credentials_exception
 
-    async for r in get_redis():
-        if await r.get(f"blacklist:{jti}"):
-            raise credentials_exception
-        break
+    if await redis_client.get(f"blacklist:{jti}"):
+        raise credentials_exception
 
     user = await UserRepository(db).get_by_id(UUID(user_id))
     if user is None or not user.is_active:

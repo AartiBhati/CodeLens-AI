@@ -59,10 +59,11 @@ async def app_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, No
     app.dependency_overrides[api_deps.get_db] = _override_get_db
     app.dependency_overrides[api_deps.get_redis] = _override_get_redis
 
-    with patch("app.workers.kafka_producer.publish_event") as mock_publish:
+    with patch("app.api.routes.repositories.publish_event") as mock_publish:
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             client.mock_publish_event = mock_publish  # convenience handle for assertions
             yield client
 
     app.dependency_overrides.clear()
+    await fake_redis.aclose()
