@@ -50,21 +50,21 @@ pipeline {
             steps {
                 sh '''
                     docker compose -p codelens-ci -f docker-compose.ci.yml up -d postgres redis
-        
+
                     docker compose -p codelens-ci -f docker-compose.ci.yml exec -T postgres sh -c \
                       "until pg_isready -U ${POSTGRES_USER:-codelens}; do sleep 1; done"
-        
+
                     for i in 1 2 3 4 5; do
                         if docker compose -p codelens-ci -f docker-compose.ci.yml exec -T postgres \
                             psql -U ${POSTGRES_USER:-codelens} -tc \
                             "SELECT 1 FROM pg_database WHERE datname = 'codelens_test'" | grep -q 1; then
                             break
                         fi
-        
+
                         echo "Waiting for PostgreSQL to be fully ready... attempt $i/5"
                         sleep 2
                     done
-        
+
                     docker compose -p codelens-ci -f docker-compose.ci.yml exec -T postgres \
                         psql -U ${POSTGRES_USER:-codelens} -tc \
                         "SELECT 1 FROM pg_database WHERE datname = 'codelens_test'" | grep -q 1 || \
@@ -132,7 +132,19 @@ pipeline {
 
         stage('Docker Compose: Validate') {
             steps {
-                sh 'docker compose -f docker-compose.prod.yml config -q'
+                sh '''
+                    cat > .env <<EOF
+        POSTGRES_USER=test
+        POSTGRES_PASSWORD=test
+        POSTGRES_DB=test
+        DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}
+        IMAGE_TAG=${IMAGE_TAG}
+        EOF
+        
+                    docker compose -f docker-compose.prod.yml config -q
+        
+                    rm -f .env
+                '''
             }
         }
 
