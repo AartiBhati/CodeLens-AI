@@ -44,7 +44,7 @@ class Message(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 	Enum(
 		MessageRole,
 		name="message_role_enum",
-		values_callabale=lambda enum_cls:[member.value for member in enum_cls],
+		values_callable=lambda enum_cls:[member.value for member in enum_cls],
 	),
 	nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
