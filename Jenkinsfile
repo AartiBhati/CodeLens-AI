@@ -14,6 +14,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                deleteDir()
                 checkout scm
             }
         }
@@ -140,9 +141,9 @@ pipeline {
         DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}
         IMAGE_TAG=${IMAGE_TAG}
         EOF
-        
+
                     docker compose -f docker-compose.prod.yml config -q
-        
+
                     rm -f .env
                 '''
             }
