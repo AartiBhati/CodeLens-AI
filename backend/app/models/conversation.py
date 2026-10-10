@@ -40,7 +40,13 @@ class Message(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     conversation_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("conversations.id", ondelete="CASCADE"), index=True, nullable=False
     )
-    role: Mapped[MessageRole] = mapped_column(Enum(MessageRole, name="message_role_enum"), nullable=False)
+    role: Mapped[MessageRole] = mapped_column(
+	Enum(
+		MessageRole,
+		name="message_role_enum",
+		values_callabale=lambda enum_cls:[member.value for member in enum_cls],
+	),
+	nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     # File paths / chunk ids used as evidence for this answer, for the "Source References" feature.
     source_references: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
